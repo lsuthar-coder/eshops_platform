@@ -1,0 +1,89 @@
+name: Deploy eShops
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/portal-api/**"
+      - "frontend/portal-ui/**"
+      - "k8s/**"
+      - ".github/workflows/deploy.yml"
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push portal-api
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend/portal-api
+          file: ./backend/portal-api/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ghcr.io/lsuthar-coder/portal-api:latest
+            ghcr.io/lsuthar-coder/portal-api:${{ github.sha }}
+
+      - name: Build portal-ui
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend/portal-ui
+          file: ./frontend/portal-ui/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ghcr.io/lsuthar-coder/portal-ui:latest
+            ghcr.io/lsuthar-coder/portal-ui:${{ github.sha }}
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p "$HOME/.kube"
+          printf '%s' '${{ secrets.KUBECONFIG }}' > "$HOME/.kube/config"
+          chmod 600 "$HOME/.kube/config"
+
+      - name: Verify Kubernetes access
+        run: |
+          kubectl cluster-info
+          kubectl get nodes
+
+      - name: Apply Kubernetes manifests
+        run: |
+          kubectl apply -f k8s/portal-api/
+          kubectl apply -f k8s/portal-ui/
+
+      - name: Update portal-api image
+        run: |
+          kubectl set image deployment/portal-api \
+            portal-api=ghcr.io/lsuthar-coder/portal-api:${{ github.sha }}
+
+      - name: Update portal-ui image
+        run: |
+          kubectl set image deployment/portal-ui \
+            portal-ui=ghcr.io/lsuthar-coder/portal-ui:${{ github.sha }}
+
+      - name: Wait for deployments
+        run: |
+          kubectl rollout status deployment/portal-api --timeout=180s
+          kubectl rollout status deployment/portal-ui --timeout=180s
+
+      - name: Verify deployment
+        run: |
+          kubectl get deployments
+          kubectl get pods
+          kubectl get hpa
