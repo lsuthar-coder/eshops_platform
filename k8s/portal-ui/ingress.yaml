@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: portal-ui
+  namespace: eshops
+spec:
+  ingressClassName: nginx
+
+  tls:
+    - hosts:
+        - portal.eshops.lsuthar.in
+      secretName: eshops-wildcard-tls
+
+  rules:
+    - host: portal.eshops.lsuthar.in
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: portal-ui
+                port:
+                  number: 80
