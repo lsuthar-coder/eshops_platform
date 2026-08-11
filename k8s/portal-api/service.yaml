@@ -3,6 +3,7 @@ kind: Service
 metadata:
   name: portal-api
   namespace: default
+
 spec:
   type: ClusterIP
 

@@ -3,6 +3,7 @@ kind: HorizontalPodAutoscaler
 metadata:
   name: portal-api
   namespace: default
+
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
@@ -23,6 +24,5 @@ spec:
   behavior:
     scaleUp:
       stabilizationWindowSeconds: 300
-
     scaleDown:
       stabilizationWindowSeconds: 300

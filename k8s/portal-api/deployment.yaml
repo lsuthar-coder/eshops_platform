@@ -3,6 +3,7 @@ kind: Deployment
 metadata:
   name: portal-api
   namespace: default
+
 spec:
   replicas: 1
 
