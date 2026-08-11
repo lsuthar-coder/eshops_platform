@@ -1,0 +1,96 @@
+// Fire-and-forget: creates the Ingress + Certificate for a tenant's
+// custom domain and reports back immediately whether resource creation
+// succeeded — this pipeline does NOT wait for the certificate to
+// actually be issued (DNS propagation can take hours, far longer than
+// is reasonable to block a Jenkins job on). Actual verification is
+// detected separately by Admin API's certificateReadinessJob polling
+// the Certificate's Ready condition on an interval.
+
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'TENANT_ID', description: 'Tenant UUID')
+        string(name: 'DOMAIN', description: 'Customer-supplied custom domain')
+    }
+
+    environment {
+        ADMIN_WEBHOOK_URL = 'https://admin-api.internal/api/admin/webhooks/jenkins-domain-callback'
+        WEBHOOK_SECRET = credentials('admin-api-webhook-secret')
+    }
+
+    stages {
+        stage('Render manifests') {
+            steps {
+                sh '''
+                    cat <<EOF > ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tenant-${TENANT_ID}-domain
+  labels:
+    tenant-id: "${TENANT_ID}"
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: ["${DOMAIN}"]
+      secretName: tenant-${TENANT_ID}-domain-tls
+  rules:
+    - host: "${DOMAIN}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: storefront-service
+                port:
+                  number: 80
+EOF
+
+                    cat <<EOF > certificate.yaml
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: tenant-${TENANT_ID}-domain
+  labels:
+    tenant-id: "${TENANT_ID}"
+spec:
+  secretName: tenant-${TENANT_ID}-domain-tls
+  dnsNames: ["${DOMAIN}"]
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+EOF
+                '''
+            }
+        }
+
+        stage('Apply') {
+            steps {
+                sh 'kubectl apply -f ingress.yaml -f certificate.yaml'
+            }
+        }
+    }
+
+    post {
+        success {
+            sh '''
+                curl -sf -X POST "$ADMIN_WEBHOOK_URL" \
+                  -H "Content-Type: application/json" \
+                  -H "x-webhook-secret: $WEBHOOK_SECRET" \
+                  -d "{\\"tenantId\\":\\"${TENANT_ID}\\",\\"resourcesCreated\\":true}"
+            '''
+        }
+        failure {
+            sh '''
+                curl -sf -X POST "$ADMIN_WEBHOOK_URL" \
+                  -H "Content-Type: application/json" \
+                  -H "x-webhook-secret: $WEBHOOK_SECRET" \
+                  -d "{\\"tenantId\\":\\"${TENANT_ID}\\",\\"resourcesCreated\\":false}"
+            '''
+        }
+    }
+}

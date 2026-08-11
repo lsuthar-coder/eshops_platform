@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: portal-api
+  namespace: default
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: portal-api
+
+  template:
+    metadata:
+      labels:
+        app: portal-api
+
+    spec:
+      containers:
+        - name: portal-api
+          image: ghcr.io/lsuthar-coder/portal-api:latest
+
+          ports:
+            - containerPort: 3000
+
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+          envFrom:
+            - secretRef:
+                name: portal-api-secrets
