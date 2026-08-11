@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: portal-api
-  namespace: default
+  namespace: eshops
 
 spec:
   replicas: 1

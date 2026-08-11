@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: portal-ui
-  namespace: default
+  namespace: eshops
 
 spec:
   type: ClusterIP
