@@ -34,4 +34,4 @@ spec:
 
           envFrom:
             - secretRef:
-                name: portal-api-secrets
+                name: portal-api-secret
