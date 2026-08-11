@@ -40,7 +40,7 @@ jobs:
             ghcr.io/lsuthar-coder/portal-api:latest
             ghcr.io/lsuthar-coder/portal-api:${{ github.sha }}
 
-      - name: Build portal-ui
+      - name: Build and push portal-ui
         uses: docker/build-push-action@v6
         with:
           context: ./frontend/portal-ui
@@ -61,29 +61,39 @@ jobs:
         run: |
           kubectl cluster-info
           kubectl get nodes
+          kubectl get namespace eshops
 
       - name: Apply Kubernetes manifests
         run: |
-          kubectl apply -f k8s/portal-api/
-          kubectl apply -f k8s/portal-ui/
+          kubectl apply -f k8s/portal-api/ -n eshops
+          kubectl apply -f k8s/portal-ui/ -n eshops
 
       - name: Update portal-api image
         run: |
           kubectl set image deployment/portal-api \
-            portal-api=ghcr.io/lsuthar-coder/portal-api:${{ github.sha }}
+            portal-api=ghcr.io/lsuthar-coder/portal-api:${{ github.sha }} \
+            -n eshops
 
       - name: Update portal-ui image
         run: |
           kubectl set image deployment/portal-ui \
-            portal-ui=ghcr.io/lsuthar-coder/portal-ui:${{ github.sha }}
+            portal-ui=ghcr.io/lsuthar-coder/portal-ui:${{ github.sha }} \
+            -n eshops
 
       - name: Wait for deployments
         run: |
-          kubectl rollout status deployment/portal-api --timeout=180s
-          kubectl rollout status deployment/portal-ui --timeout=180s
+          kubectl rollout status deployment/portal-api \
+            --timeout=180s \
+            -n eshops
+
+          kubectl rollout status deployment/portal-ui \
+            --timeout=180s \
+            -n eshops
 
       - name: Verify deployment
         run: |
-          kubectl get deployments
-          kubectl get pods
-          kubectl get hpa
+          kubectl get deployments -n eshops
+          kubectl get pods -n eshops
+          kubectl get services -n eshops
+          kubectl get ingress -n eshops
+          kubectl get hpa -n eshops
