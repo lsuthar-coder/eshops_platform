@@ -45,12 +45,12 @@ export default function ResultDialog({ open, onClose, loading, data, error }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Store status"
-    >
-      <div className="glass-panel w-full max-w-md p-6 sm:p-8">
+  className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4"
+  role="dialog"
+  aria-modal="true"
+  aria-label="Store status"
+>
+      <div className="glass-panel-result w-full max-w-md p-6 sm:p-8">
         <div className="mb-6 flex items-center justify-between">
           <h2
             className="text-lg"
