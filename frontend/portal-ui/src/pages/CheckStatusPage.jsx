@@ -25,7 +25,6 @@ export default function CheckStatusPage() {
 
     try {
       const data = await getStatusByMail(mail);
-      console.log("Status data:", data);
       setResult(data);
     } catch (err) {
       setResultError(err.message);

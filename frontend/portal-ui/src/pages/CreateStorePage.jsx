@@ -83,7 +83,6 @@ export default function CreateStorePage() {
 
     try {
       const data = await createStore(form);
-      console.log(data)
       setResult(data);
     } catch (err) {
       setResultError(err.message);
@@ -112,7 +111,7 @@ export default function CreateStorePage() {
             <input
               value={form.store_name}
               onChange={(e) => updateField("store_name", e.target.value)}
-              placeholder="Nelson's Emporium"
+              placeholder="Leela Store"
               className="glass-input w-full px-4 py-3"
               required
             />
@@ -122,7 +121,7 @@ export default function CreateStorePage() {
             <input
               value={form.name}
               onChange={(e) => updateField("name", e.target.value)}
-              placeholder="John Doe"
+              placeholder="Leeladhar Suthar"
               className="glass-input w-full px-4 py-3"
               required
             />

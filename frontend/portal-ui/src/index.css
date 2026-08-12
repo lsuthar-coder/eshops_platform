@@ -60,6 +60,7 @@ body {
   border-radius: 9999px;
   filter: blur(90px);
   opacity: 0.55;
+  will-change: transform;
 }
 
 .aurora-blob--violet {
@@ -113,39 +114,30 @@ body {
 
 /* ---- Glass primitives ---- */
 
-.modal-backdrop {
-  background: rgba(0, 0, 0, 0.50);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
 .glass-panel {
   position: relative;
-  overflow: hidden;
-  
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: var(--color-glass);
+  border: 1px solid var(--color-glass-border);
   border-radius: 24px;
-
+  /* Value goes through a custom property on purpose — Tailwind v4's
+     production minifier (Lightning CSS) was found to silently DROP the
+     unprefixed backdrop-filter declaration when both -webkit-backdrop-filter
+     and backdrop-filter were written directly with the same literal value,
+     apparently treating them as a mergeable duplicate and keeping only the
+     prefixed one. Routing through a var() stops that dedup logic from
+     recognizing them as the same declaration, so both survive minification.
+     Confirmed by inspecting the actual dist/ CSS output — backdrop-filter
+     was missing entirely before this change. */
+  --glass-blur: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  transform: translateZ(0);
+  isolation: isolate;
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.14) inset,
     0 24px 60px -20px rgba(0, 0, 0, 0.6);
 }
-.glass-panel-result {
-  position: relative;
-  overflow: hidden;
 
-  background: rgba(20, 24, 38, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 24px;
-
-  backdrop-filter: blur(24px) saturate(140%);
-  -webkit-backdrop-filter: blur(24px) saturate(140%);
-
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.14) inset,
-    0 24px 60px -20px rgba(0, 0, 0, 0.6);
-}
 .glass-input {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--color-glass-border);
