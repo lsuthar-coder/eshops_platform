@@ -2,6 +2,20 @@ import { useEffect, useState } from "react";
 import GlassCard from "../components/GlassCard";
 import RepeatableList from "../components/RepeatableList";
 import DomainSection from "./DomainSection";
+import SearchFilterCheckboxes from "../components/SearchFilterCheckboxes";
+import GalleryImagesEditor from "../components/GalleryImagesEditor";
+
+const FONT_OPTIONS = ["Inter", "Roboto", "Open Sans", "Poppins", "Montserrat"];
+const SOCIAL_PLATFORM_OPTIONS = [
+  "Instagram",
+  "Facebook",
+  "Twitter/X",
+  "YouTube",
+  "LinkedIn",
+  "TikTok",
+  "Pinterest",
+  "WhatsApp",
+];
 import {
   getConfig,
   updateConfig,
@@ -39,20 +53,6 @@ function Field({ label, children }) {
       <span className="text-[var(--color-ink-dim)]">{label}</span>
       {children}
     </label>
-  );
-}
-
-// Wraps a flat string[] as {value}[] so it can reuse RepeatableList,
-// which is built around objects with named fields.
-function StringListEditor({ items, onChange, placeholder, addLabel }) {
-  const wrapped = items.map((v) => ({ value: v }));
-  return (
-    <RepeatableList
-      items={wrapped}
-      onChange={(next) => onChange(next.map((i) => i.value))}
-      fields={[{ key: "value", placeholder }]}
-      addLabel={addLabel}
-    />
   );
 }
 
@@ -97,7 +97,16 @@ export default function MainPage() {
       const next = structuredClone(prev);
       const keys = path.split(".");
       let obj = next;
-      for (let i = 0; i < keys.length - 1; i++) obj = obj[keys[i]];
+      for (let i = 0; i < keys.length - 1; i++) {
+        // Older tenant documents (created before some config sections
+        // existed, or via an upsert that only set a few top-level
+        // fields) can be missing whole nested objects — create them on
+        // the way down instead of crashing on `undefined.foo = ...`.
+        if (obj[keys[i]] == null || typeof obj[keys[i]] !== "object") {
+          obj[keys[i]] = {};
+        }
+        obj = obj[keys[i]];
+      }
       obj[keys[keys.length - 1]] = value;
       return next;
     });
@@ -184,12 +193,20 @@ export default function MainPage() {
             ))}
           </div>
           <Field label="Font family">
-            <input
+            <select
               value={config.theme?.fontFamily || ""}
               onChange={(e) => patchField("theme.fontFamily", e.target.value)}
-              placeholder="Inter"
               className="glass-input px-4 py-3"
-            />
+            >
+              <option value="" style={{ background: "#10152a" }}>
+                Select a font…
+              </option>
+              {FONT_OPTIONS.map((font) => (
+                <option key={font} value={font} style={{ background: "#10152a" }}>
+                  {font}
+                </option>
+              ))}
+            </select>
           </Field>
           <label className="flex items-center gap-3 text-sm">
             <input
@@ -311,7 +328,12 @@ export default function MainPage() {
               items={config.footer?.socialMedia || []}
               onChange={(v) => patchField("footer.socialMedia", v)}
               fields={[
-                { key: "platform", placeholder: "Instagram" },
+                {
+                  key: "platform",
+                  type: "select",
+                  placeholder: "Choose platform",
+                  options: SOCIAL_PLATFORM_OPTIONS,
+                },
                 { key: "url", placeholder: "https://instagram.com/..." },
                 { key: "text", placeholder: "Follow us" },
               ]}
@@ -369,11 +391,9 @@ export default function MainPage() {
           saved={saved.search}
           onSave={() => save("search", { searchPage: config.searchPage })}
         >
-          <StringListEditor
-            items={config.searchPage?.enabledFilters || []}
+          <SearchFilterCheckboxes
+            selected={config.searchPage?.enabledFilters || []}
             onChange={(v) => patchField("searchPage.enabledFilters", v)}
-            placeholder="e.g. price, category, in-stock"
-            addLabel="Add filter"
           />
         </Section>
 
@@ -392,14 +412,9 @@ export default function MainPage() {
             />
             <span className="text-[var(--color-ink-dim)]">Show gallery page</span>
           </label>
-          <RepeatableList
-            items={config.gallery?.images || []}
+          <GalleryImagesEditor
+            images={config.gallery?.images || []}
             onChange={(v) => patchField("gallery.images", v)}
-            fields={[
-              { key: "imageUrl", placeholder: "Image URL" },
-              { key: "caption", placeholder: "Caption" },
-            ]}
-            addLabel="Add image"
           />
         </Section>
       </div>

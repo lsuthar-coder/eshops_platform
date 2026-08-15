@@ -9,6 +9,7 @@ import { redis } from "./db/redis.js";
 import { checkPostgresConnection, pool } from "./db/postgres.js";
 import { runCertificateReadinessCheck } from "./jobs/certificateReadinessJob.js";
 import { runDomainLifecycleCheck } from "./jobs/domainLifecycleJob.js";
+import { runMigrations } from "./db/migrate.js";
 
 let server;
 let scheduledTasks = [];
@@ -17,7 +18,7 @@ async function start() {
   try {
     await checkPostgresConnection();
     logger.info("PostgreSQL connected");
-
+    await runMigrations();
     await connectMongo();
 
     await redis.ping();

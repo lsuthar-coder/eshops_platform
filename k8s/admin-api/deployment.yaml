@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admin-api
+  namespace: eshops
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: admin-api
+
+  template:
+    metadata:
+      labels:
+        app: admin-api
+
+    spec:
+      containers:
+        - name: admin-api
+          image: ghcr.io/lsuthar-coder/admin-api:latest
+
+          ports:
+            - containerPort: 4100
+
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+          envFrom:
+            - secretRef:
+                name: admin-api-secret

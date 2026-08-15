@@ -71,12 +71,46 @@ async function writeThroughCache(doc) {
   ]);
 }
 
+/**
+ * Fills in empty nested objects/arrays for any section missing from a
+ * document — needed because documents created via a partial upsert
+ * (see portal_backend's createTenant) don't get Mongoose's schema
+ * defaults applied unless `setDefaultsOnInsert` was set at insert time.
+ * Fixed going forward on the write side too, but this keeps documents
+ * created before that fix from crashing every consumer of this data.
+ */
+function normalizeConfig(doc) {
+  const obj = doc.toObject();
+
+  obj.domain ??= {};
+  obj.theme ??= {};
+  obj.favicon ??= null;
+  obj.logo ??= {};
+  obj.paymentGateways ??= [];
+  obj.businessDetails ??= {};
+  obj.customerSupport ??= {};
+  obj.footer ??= {};
+  obj.footer.links ??= [];
+  obj.footer.socialMedia ??= [];
+  obj.mainPage ??= {};
+  obj.mainPage.banners ??= [];
+  obj.mainPage.featuredProductIds ??= [];
+  obj.mainPage.categoryIds ??= [];
+  obj.searchPage ??= {};
+  obj.searchPage.enabledFilters ??= [];
+  obj.pages ??= [];
+  obj.gallery ??= { enabled: false, images: [] };
+
+  return obj;
+}
+
 export async function getConfig(tenantId) {
   const doc = await StoreConfig.findOne({ tenantId });
   if (!doc) {
-    throw new NotFoundError("Store config not found");
+    throw new NotFoundError(`Store config not found for tenantId: ${tenantId}`);
   }
-  return doc;
+  console.log("Retrieved config for tenantId:", tenantId, "Config:", doc);
+  return normalizeConfig(doc);
 }
 
 /**
@@ -107,7 +141,7 @@ export async function updateConfig(tenantId, patch) {
   }
 
   await writeThroughCache(doc);
-  return doc;
+  return normalizeConfig(doc);
 }
 
 export async function updatePage(tenantId, pageType, pageData) {
@@ -127,5 +161,5 @@ export async function updatePage(tenantId, pageType, pageData) {
 
   await doc.save();
   await writeThroughCache(doc);
-  return doc;
+  return normalizeConfig(doc);
 }

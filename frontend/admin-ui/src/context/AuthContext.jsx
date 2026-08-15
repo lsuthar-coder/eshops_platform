@@ -35,8 +35,6 @@ export function AuthProvider({ children }) {
 
   async function login(mail, password) {
     const result = await loginRequest(mail, password);
-    console.log(result)
-    alert(result)
     setToken(result.token);
     await loadProfile();
     return result;

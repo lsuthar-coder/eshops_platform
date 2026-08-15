@@ -1,8 +1,9 @@
 /**
  * Generic add/remove list editor for the config object's repeated array
- * fields (footer links, social media, banners, gallery images, search
- * filters, pages). One reusable pattern instead of a bespoke component
- * per array — `fields` describes the inputs for a single row.
+ * fields (footer links, social media, banners, search filters, pages).
+ * One reusable pattern instead of a bespoke component per array —
+ * `fields` describes the inputs for a single row. Each field is a text
+ * input by default; pass `type: "select"` + `options` for a dropdown.
  */
 export default function RepeatableList({ items, onChange, fields, addLabel }) {
   function updateItem(index, key, value) {
@@ -27,15 +28,33 @@ export default function RepeatableList({ items, onChange, fields, addLabel }) {
           key={index}
           className="glass-input flex flex-wrap items-center gap-2 p-3"
         >
-          {fields.map((field) => (
-            <input
-              key={field.key}
-              value={item[field.key] ?? ""}
-              onChange={(e) => updateItem(index, field.key, e.target.value)}
-              placeholder={field.placeholder}
-              className="glass-input min-w-0 flex-1 px-3 py-2 text-sm"
-            />
-          ))}
+          {fields.map((field) =>
+            field.type === "select" ? (
+              <select
+                key={field.key}
+                value={item[field.key] ?? ""}
+                onChange={(e) => updateItem(index, field.key, e.target.value)}
+                className="glass-input min-w-0 flex-1 px-3 py-2 text-sm"
+              >
+                <option value="" style={{ background: "#10152a" }}>
+                  {field.placeholder || "Select…"}
+                </option>
+                {field.options.map((opt) => (
+                  <option key={opt} value={opt} style={{ background: "#10152a" }}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                key={field.key}
+                value={item[field.key] ?? ""}
+                onChange={(e) => updateItem(index, field.key, e.target.value)}
+                placeholder={field.placeholder}
+                className="glass-input min-w-0 flex-1 px-3 py-2 text-sm"
+              />
+            )
+          )}
           <button
             type="button"
             onClick={() => removeItem(index)}

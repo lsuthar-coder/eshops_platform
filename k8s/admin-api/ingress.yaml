@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: admin-api
+  namespace: eshops
+spec:
+  ingressClassName: admin
+
+  tls:
+    - hosts:
+        - admin-api.eshops.lsuthar.in
+      secretName: eshops-wildcard-tls
+
+  rules:
+    - host: admin-api.eshops.lsuthar.in
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: admin-api
+                port:
+                  number: 3000

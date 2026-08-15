@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: admin-ui
+  namespace: eshops
+spec:
+  ingressClassName: nginx
+
+  tls:
+    - hosts:
+        - admin.eshops.lsuthar.in
+      secretName: eshops-wildcard-tls
+
+  rules:
+    - host: admin.eshops.lsuthar.in
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: admin-ui
+                port:
+                  number: 80

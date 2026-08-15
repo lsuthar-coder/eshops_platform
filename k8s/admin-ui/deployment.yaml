@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admin-ui
+  namespace: eshops
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: admin-ui
+
+  template:
+    metadata:
+      labels:
+        app: admin-ui
+
+    spec:
+      containers:
+        - name: admin-ui
+          image: ghcr.io/lsuthar-coder/admin-ui:latest
+
+          ports:
+            - containerPort: 80
+
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
